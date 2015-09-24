@@ -6,6 +6,8 @@ import java.lang.reflect.Method;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 public class Utilities {
+	static private int indentLevel = 0;
+	
 	public static void setProperty( Class<RuleViolations> classDef, RuleViolations obj, String name, String value ) throws Exception {
 		Exception failureException = null;
 		try {
@@ -60,15 +62,26 @@ public class Utilities {
 	    return result.toString();
 	}
 	
-	public static void print( int indentLevel, String... lines ) {
-		print( indentLevel, false, lines );
+	public static int indent() {
+		return ++indentLevel;
 	}
 
-	public static void println( int indentLevel, String... lines ) {
-		print( indentLevel, true, lines );
+	public static int outdent() {
+		if( indentLevel > 0 ) {
+			--indentLevel;
+		}
+		return indentLevel;
 	}
 
-	private static void print( int indentLevel, boolean println, String[] lines ) {
+	public static void print( String... lines ) {
+		print( false, lines );
+	}
+
+	public static void println( String... lines ) {
+		print( true, lines );
+	}
+
+	private static void print( boolean println, String[] lines ) {
 		StringBuilder indent = new StringBuilder();
 		for( int level = 0; level < indentLevel; level++ ) {
 			indent.append( "  " );

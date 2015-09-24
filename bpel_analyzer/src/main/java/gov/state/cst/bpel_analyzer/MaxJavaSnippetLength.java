@@ -90,13 +90,15 @@ public class MaxJavaSnippetLength extends RuleViolations {
 	}
 
 	@Override
-	public void printOutput( int level, String description )
+	public void printOutput( String description )
 	{
-		Utilities.println( level, 
+		Utilities.println(
 				String.format( "%s [%d Violations out of %d snippets]",
 				description, getViolations().size(), this.countOfSnippets ) );
-		printExceptions( level+1 );
-		printViolations( level+1 );
+		Utilities.indent();
+		printExceptions();
+		printViolations();
+		Utilities.outdent();
 	}
 
 }

@@ -55,26 +55,28 @@ public abstract class RuleViolations {
 		return( this.hasExceptions() | this.hasViolations() );
 	}
 	
-	public void printOutput( int level, String description )
+	public void printOutput( String description )
 	{
-		Utilities.println( level, description + " [" + Integer.toString( violations.size() ) + " Violations]");
-		printExceptions( level+1 );
-		printViolations( level+1 );
+		Utilities.println( description + " [" + Integer.toString( violations.size() ) + " Violations]");
+		Utilities.indent();
+		printExceptions();
+		printViolations();
+		Utilities.outdent();
 	}
 
-	public void printViolations( int level ) {
+	public void printViolations() {
 		for( Violation v : violations ) {
-			Utilities.println( level, v.toString() );
+			Utilities.println( v.toString() );
 		}
 	}
 
-	public void printExceptions( int level ) {
+	public void printExceptions() {
 		if( exceptions.size() > 0 ) {
-			Utilities.println( level, "---v" );
+			Utilities.println( "---v" );
 			for( AppException e : exceptions ) {
-				Utilities.println( level, Utilities.StringifyAppException( e ) );
+				Utilities.println( Utilities.StringifyAppException( e ) );
 			}
-			Utilities.println( level, "  ---^" );
+			Utilities.println( "  ---^" );
 		}
 	}
 }
