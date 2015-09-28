@@ -14,7 +14,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class MaxJavaSnippetLength extends RuleViolations {
-    private String filePath;
+    private BPELFile bpelFile;
     private int max_code_lines;
     private int countOfSnippets;
 
@@ -37,12 +37,12 @@ public class MaxJavaSnippetLength extends RuleViolations {
 	}
 
 	@Override
-	public boolean evaluate(String bpelPath) {
-		this.filePath = bpelPath;
+	public boolean evaluate( BPELFile bpelFile ) {
+		this.bpelFile = bpelFile;
 		this.clear();
 
 		try {
-			File fXmlFile = new File( filePath );
+			File fXmlFile = bpelFile.getPath().toFile();
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(fXmlFile);
@@ -63,7 +63,7 @@ public class MaxJavaSnippetLength extends RuleViolations {
 	        		String codeName = node.getAttributes().getNamedItem("name").getNodeValue();
             		Violation v = new Violation();
             		v.setViolationDescription( "Java fragment of " + Integer.toString(code_lines)  + " lines exceeds allowed limit of " + Integer.toString(max_code_lines) );
-            		ViolationLocation vl = new ViolationLocation( filePath, "at bpelx:exec[@name='" + codeName + "']" );
+            		ViolationLocation vl = new ViolationLocation( bpelFile.getPath().toString(), "at bpelx:exec[@name='" + codeName + "']" );
             		v.setViolationLocation( vl );
             		add( v );
 	        	}

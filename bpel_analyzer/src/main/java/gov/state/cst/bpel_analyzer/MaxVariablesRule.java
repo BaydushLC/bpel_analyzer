@@ -21,8 +21,9 @@ import org.xml.sax.helpers.XMLReaderFactory;
  *
  */
 public class MaxVariablesRule extends RuleViolations {
-    private String filePath;
-    private int max_variables;
+    private BPELFile bpelFile = null;
+    private int max_variables =0;
+	private boolean shouldDehydrate = true;
 
     public MaxVariablesRule() {
     }
@@ -48,13 +49,24 @@ public class MaxVariablesRule extends RuleViolations {
         private Stack<Integer> level;
         private Locator locator;
         private Collection<String> scopes;
+        private Collection<String> dehydrationPoints;
     	
         public BPELContentHandler() {
         	level = new Stack<Integer>();
         	locator = null;
+        	
+        	// all scopes should be lowercase
     		scopes = new HashSet<String>();
     		scopes.add( "process" );
     		scopes.add( "scope" );
+    		
+        	// all dehydrationPoints should be lowercase
+    		dehydrationPoints = new HashSet<String>();
+    		dehydrationPoints.add( "wait" );
+    		dehydrationPoints.add( "receive" );
+    		dehydrationPoints.add( "onmessage" );
+    		dehydrationPoints.add( "onalarm" );
+    		dehydrationPoints.add( "dehydrate" );
         }
         
         /* (non-Javadoc)
@@ -72,14 +84,24 @@ public class MaxVariablesRule extends RuleViolations {
         @SuppressWarnings( "javadoc" )
         @Override
         public void startElement( String nsURI, String localName, String rawName, Attributes attributes ) throws SAXException {
-            if( scopes.contains( localName.toLowerCase() ) ) {
+        	localName = localName.toLowerCase();
+        	// wait, receive, onMessage, and onAlarm or a call to Async WSDL API force dehydration
+        	if( dehydrationPoints.contains( localName ) && !shouldDehydrate ) {
+        		Violation v = new Violation();
+        		v.setViolationDescription( "BPEL contains " + rawName + " step that forces dehydration but conflicts with composite InMemoryOptimization property!" );
+        		ViolationLocation vl = new ViolationLocation( bpelFile.getPath().toString(), locator.getLineNumber(), locator.getColumnNumber() );
+        		v.setViolationLocation( vl );
+        		add( v );
+        		shouldDehydrate = true;
+        	}
+            if( scopes.contains( localName ) ) {
             	if( level.size() == 0 ) {
             		level.push( new Integer( 0 ) );
             	} else {
             		level.push( new Integer(level.peek()));
             	}
             }
-            else if( localName.equalsIgnoreCase( "variable" ) ) {
+            else if( localName.equals( "variable" ) ) {
             	level.set(level.size()-1, new Integer( level.peek().intValue() + 1 ) );
             }
         }
@@ -90,14 +112,14 @@ public class MaxVariablesRule extends RuleViolations {
         @SuppressWarnings( "javadoc" )
         @Override
         public void endElement(String uri, String localName, String qName) {
-            if( scopes.contains( localName ) )
+            if( scopes.contains( localName.toLowerCase() ) )
             {
                 int varCount = level.pop().intValue();
-            	if( varCount > max_variables )
+            	if( varCount > max_variables && shouldDehydrate )
             	{
             		Violation v = new Violation();
             		v.setViolationDescription( "Variable count of " + Integer.toString(varCount)  + " exceeds allowed limit of " + Integer.toString(max_variables) );
-            		ViolationLocation vl = new ViolationLocation( filePath, locator.getLineNumber(), locator.getColumnNumber() );
+            		ViolationLocation vl = new ViolationLocation( bpelFile.getPath().toString(), locator.getLineNumber(), locator.getColumnNumber() );
             		v.setViolationLocation( vl );
             		add( v );
             	}
@@ -122,17 +144,29 @@ public class MaxVariablesRule extends RuleViolations {
     }
 
 	@Override
-	public boolean evaluate(String bpelPath) {
-		this.filePath = bpelPath;
+	public boolean evaluate( BPELFile bpelFile ) {
+		this.bpelFile = bpelFile;
 		this.clear();
+		
+		// determine if this BPEL has flags set to not dehydrate
+		try {
+			if( bpelFile.property( "bpel.config.InMemoryOptimization", new Boolean( false ) ).booleanValue()
+					|| bpelFile.property( "bepl.config.completionPersistPolicy", new Boolean( false ) ).booleanValue() )
+			{
+				shouldDehydrate = false;
+			}
+		} catch (IllegalConversionException e1) {
+			add( new AppException( "BPEL file not found: " + bpelFile.getPath().toString(), e1 ) );
+			return !hasProblems();
+		}
 
         try {
         	XMLReader parser = XMLReaderFactory.createXMLReader();
         	parser.setContentHandler( new BPELContentHandler() );
-            parser.parse( filePath );
+            parser.parse( bpelFile.getPath().toString() );
         }
         catch( FileNotFoundException e ) {
-        	add( new AppException( "BPEL file not found: " + filePath, e ) );
+        	add( new AppException( "BPEL file not found: " + bpelFile.getPath().toString(), e ) );
         } catch (IOException | SAXException e) {
         	add( new AppException( e ) );
 		}

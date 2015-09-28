@@ -2,8 +2,14 @@ package gov.state.cst.bpel_analyzer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.AbstractList;
+import java.util.Collections;
+import java.util.List;
+import java.util.RandomAccess;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class Utilities {
 	static private int indentLevel = 0;
@@ -82,6 +88,8 @@ public class Utilities {
 	}
 
 	private static void print( boolean println, String[] lines ) {
+		boolean firstLine = true;
+		
 		StringBuilder indent = new StringBuilder();
 		for( int level = 0; level < indentLevel; level++ ) {
 			indent.append( "  " );
@@ -91,12 +99,38 @@ public class Utilities {
 			String[] allLines = line.split( "\\r?\\n" );
 			for( String printableLine : allLines ) {
 				System.out.print( indent.toString() );
+				if( firstLine ) {
+					firstLine = false;
+					indent.append( "  " );
+				}
 				if( println ) {
 					System.out.println( printableLine.replaceAll("[\n\r]", "") );
 				} else {
 					System.out.print( printableLine.replaceAll("[\n\r]", "") );
 				}
 			}
+		}
+	}
+
+	public static List<Node> asList( NodeList n ) {
+		return n.getLength()==0
+				? Collections.<Node>emptyList()
+				: new NodeListWrapper(n);
+	}
+
+	private static final class NodeListWrapper extends AbstractList<Node> implements RandomAccess {
+		private final NodeList list;
+		
+		NodeListWrapper(NodeList l) {
+			list=l;
+		}
+		
+		public Node get(int index) {
+			return list.item(index);
+		}
+		
+		public int size() {
+			return list.getLength();
 		}
 	}
 

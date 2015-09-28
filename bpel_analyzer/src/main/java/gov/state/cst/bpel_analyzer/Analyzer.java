@@ -37,7 +37,7 @@ public class Analyzer {
 
 		for( JDeveloperProject project : getProjectFiles( args ) )
 		{
-			Utilities.print( "Processing project " + project.getName() );
+			Utilities.println( "Processing project " + project.getName() );
 			Utilities.indent();
 
 			if( project.hasComposite() )
@@ -56,12 +56,10 @@ public class Analyzer {
 						| IOException e) {
 					logger.error( "Error constructing BPELComposite object", e );
 				}
-//				processProjectFile(projectFile.getParent().toString(), projectFile
-//						.getFileName().toString());
 			}
 			else
 			{
-				Utilities.print( project.getName() + " does not have a BPEL composite." );
+				Utilities.println( project.getName() + " does not have a BPEL composite." );
 			}
 			
 			Utilities.outdent();
@@ -115,27 +113,7 @@ public class Analyzer {
 		return projectFiles;
 	}
 
-/*	private static void processProjectFile(String basePath, String projectFile)
-			throws AppException {
-		logger.info("Processing project file {}", projectFile);
-		Utilities.println(0, "Project: " + projectFile);
-		try {
-			Path projectPath = Paths.get( basePath, projectFile );
-			JDeveloperProject project = new JDeveloperProject( projectPath );
-			for (String bpelFile : project.getBPELFiles()) {
-				processBpelFile(basePath, bpelFile);
-			}
-		} catch (Exception e) {
-			logger.error("Exception from processBpelFile()", e);
-			e.printStackTrace();
-			if (e instanceof AppException) {
-				throw (AppException) e;
-			}
-			throw new AppException(e, true);
-		}
-	}
-*/
-	private static void processBpelFile( BPELFile bpel)
+	private static void processBpelFile( BPELFile bpel )
 			throws Exception {
 		Path bpelPath = bpel.getPath();
 		Utilities.println( "BPEL: " + bpelPath.getFileName() );
@@ -159,7 +137,7 @@ public class Analyzer {
 				String description = rule.getString("description");
 				if (evaluator != null) {
 					// invoke the evaluation
-					evaluator.evaluate(bpelPath.toString());
+					evaluator.evaluate( bpel );
 					evaluator.printOutput( description );
 				} else {
 					throw new ClassNotFoundException(

@@ -30,7 +30,7 @@ public class ViolationLocation {
 	    String NEW_LINE = System.getProperty("line.separator");
 
 	    result.append( "Filename: " + file + NEW_LINE );
-	    result.append( "  " + filePosition + NEW_LINE );
+	    result.append( filePosition + NEW_LINE );
 
 	    return result.toString();
 	}

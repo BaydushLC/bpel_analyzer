@@ -13,7 +13,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 public class MaxCodeDepthRule extends RuleViolations {
-    private String filePath;
+    private BPELFile bpelFile;
     private int max_code_depth;
 
     public MaxCodeDepthRule() {
@@ -73,7 +73,7 @@ public class MaxCodeDepthRule extends RuleViolations {
             	if( ++codeDepth > max_code_depth ) {
 	        		Violation v = new Violation();
 	        		v.setViolationDescription( "Code depth of " + Integer.toString(codeDepth)  + " exceeds allowed limit of " + Integer.toString(max_code_depth) );
-	        		ViolationLocation vl = new ViolationLocation( filePath, locator.getLineNumber(), locator.getColumnNumber() );
+	        		ViolationLocation vl = new ViolationLocation( bpelFile.getPath().toString(), locator.getLineNumber(), locator.getColumnNumber() );
 	        		v.setViolationLocation( vl );
 	        		add( v );
 	            }
@@ -109,17 +109,17 @@ public class MaxCodeDepthRule extends RuleViolations {
     }
 
 	@Override
-	public boolean evaluate(String bpelPath) {
-		this.filePath = bpelPath;
+	public boolean evaluate( BPELFile bpelFile ) {
+		this.bpelFile = bpelFile;
 		this.clear();
 
         try {
         	XMLReader parser = XMLReaderFactory.createXMLReader();
         	parser.setContentHandler( new BPELContentHandler() );
-            parser.parse( filePath );
+            parser.parse( bpelFile.getPath().toString() );
         }
         catch( FileNotFoundException e ) {
-        	add( new AppException( "BPEL file not found: " + filePath, e ) );
+        	add( new AppException( "BPEL file not found: " + bpelFile.getPath().toString(), e ) );
         } catch (IOException | SAXException e) {
         	add( new AppException( e ) );
 		}

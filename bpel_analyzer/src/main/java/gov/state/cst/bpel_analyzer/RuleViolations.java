@@ -11,7 +11,7 @@ public abstract class RuleViolations {
 		this.exceptions = new ArrayList<AppException>();
 	}
 	
-	public abstract boolean evaluate( String bpelPath );
+	public abstract boolean evaluate( BPELFile bpelFile );
 	
 	public void clear() {
 		if( this.violations.size() != 0 )
