@@ -5,35 +5,31 @@ import java.util.ArrayList;
 public abstract class RuleViolations {
 	private ArrayList<Violation> violations;
 	private ArrayList<AppException> exceptions;
-	
+
 	public RuleViolations() {
 		this.violations = new ArrayList<Violation>();
 		this.exceptions = new ArrayList<AppException>();
 	}
-	
-	public abstract boolean evaluate( BPELFile bpelFile );
-	
+
+	public abstract boolean evaluate(BPELFile bpelFile);
+
 	public void clear() {
-		if( this.violations.size() != 0 )
-		{
+		if (!this.violations.isEmpty()) {
 			this.violations = new ArrayList<Violation>();
 		}
-		if( this.exceptions.size() != 0 )
-		{
+		if (!this.exceptions.isEmpty()) {
 			this.exceptions = new ArrayList<AppException>();
 		}
 	}
 
-	public boolean hasViolations()
-	{
+	public boolean hasViolations() {
 		return !this.violations.isEmpty();
 	}
-	
-	public boolean hasExceptions()
-	{
+
+	public boolean hasExceptions() {
 		return !this.exceptions.isEmpty();
 	}
-	
+
 	public ArrayList<Violation> getViolations() {
 		return violations;
 	}
@@ -41,23 +37,34 @@ public abstract class RuleViolations {
 	public ArrayList<AppException> getExceptions() {
 		return exceptions;
 	}
-	
-	public void add( Violation violation ) {
-		violations.add( violation );
+
+	public void add(Violation violation) {
+		violations.add(violation);
 	}
-	
-	public void add( AppException exception ) {
-		exceptions.add( exception );
+
+	public void add(AppException exception) {
+		exceptions.add(exception);
 	}
-	
-	public boolean hasProblems()
-	{
-		return( this.hasExceptions() | this.hasViolations() );
+
+	public boolean hasProblems() {
+		return (this.hasExceptions() | this.hasViolations());
 	}
-	
-	public void printOutput( String description )
-	{
-		Utilities.println( description + " [" + Integer.toString( violations.size() ) + " Violations]");
+
+	public void printOutput(String description) {
+		printSummary(description + " [" + Integer.toString(violations.size())
+				+ " Violations]");
+		printDetail();
+	}
+
+	protected void printSummary(String description) {
+		Utilities.activateSummaryStream();
+		Utilities.println(description);
+		Utilities.activateDetailStream();
+		Utilities.println(description);
+	}
+
+	protected void printDetail() {
+		Utilities.activateDetailStream();
 		Utilities.indent();
 		printExceptions();
 		printViolations();
@@ -65,18 +72,18 @@ public abstract class RuleViolations {
 	}
 
 	public void printViolations() {
-		for( Violation v : violations ) {
-			Utilities.println( v.toString() );
+		for (Violation v : violations) {
+			Utilities.println(v.toString());
 		}
 	}
 
 	public void printExceptions() {
-		if( exceptions.size() > 0 ) {
-			Utilities.println( "---v" );
-			for( AppException e : exceptions ) {
-				Utilities.println( Utilities.StringifyAppException( e ) );
+		if (!exceptions.isEmpty()) {
+			Utilities.println("---v");
+			for (AppException e : exceptions) {
+				Utilities.println(Utilities.StringifyAppException(e));
 			}
-			Utilities.println( "  ---^" );
+			Utilities.println("  ---^");
 		}
 	}
 }

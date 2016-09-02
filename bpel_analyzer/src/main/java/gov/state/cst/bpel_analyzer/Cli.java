@@ -4,6 +4,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
@@ -44,8 +45,25 @@ public class Cli {
     public boolean initialize( String[] args )
     {
     	options = new Options();
-    	options.addOption( "h", "help", false, "show help." );
-    	options.addOption( "r", "recurse", false, "recurse into sub-directories for jDeveloper project files." );
+    	options.addOption( "h", "help", false, "Show help." );
+    	options.addOption( "r", "recurse", false, "Recurse into sub-directories for jDeveloper project files." );
+    	options.addOption( Option.builder("s")
+    			.longOpt("summary")
+    			.required(false)
+    			.optionalArg(true)
+    			.argName("summaryFilename")
+    			.type(String.class)
+                .desc( "Output summary data to STDOUT or filename if given.  Defaults to no summary output." )
+                .build() );
+    	options.addOption( "nd", "noDetail", false, "Suppress detail output result.  Mutually exclusive with 'd' option.");
+    	options.addOption( Option.builder("d")
+    			.longOpt("detail")
+    			.required(false)
+    			.optionalArg(true)
+    			.argName("detailFilename")
+    			.type(String.class)
+                .desc( "Output detail data to STDOUT or filename if given.  Defaults to STDOUT." )
+                .build() );
     	
     	CommandLineParser parser = new DefaultParser();
     	
@@ -56,6 +74,12 @@ public class Cli {
     		
     		if( cmd.hasOption( "h" ) )
     		{
+    			help();
+    			return false;
+    		}
+    		
+    		if( cmd.hasOption("d") && cmd.hasOption("nd") ) {
+    			logger.error("Mutually exclusive switches specified.");
     			help();
     			return false;
     		}

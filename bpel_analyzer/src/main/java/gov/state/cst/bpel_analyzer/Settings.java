@@ -5,12 +5,16 @@ package gov.state.cst.bpel_analyzer;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author BaydushLC
  *
  */
 public class Settings {
+	private static final Logger logger = LoggerFactory
+			.getLogger(Settings.class);
 
     /**
      * Singleton instance of the object
@@ -27,7 +31,7 @@ public class Settings {
     		config = new XMLConfiguration( fileName );
         }
     	catch (ConfigurationException e) {
-        	e.printStackTrace();
+    		logger.error("", e);
             throw new AppException( e, true );
 		}
     }
@@ -42,8 +46,7 @@ public class Settings {
             instance = new Settings();
         }
         catch( AppException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        	logger.error("", e);
             if( e.isFatal() )
             {
                 System.exit( 1 );
