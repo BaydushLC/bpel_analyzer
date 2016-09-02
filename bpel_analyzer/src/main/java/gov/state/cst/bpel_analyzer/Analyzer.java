@@ -34,42 +34,43 @@ public class Analyzer {
 	public static void main(String[] args) throws AppException {
 		logger.trace("Starting application");
 		// Generate the selective list, with a one-use File object.
+		if (!Cli.getInstance().initialize(args)) {
+			return;
+		}
 
-		for( JDeveloperProject project : getProjectFiles( args ) )
-		{
-			Utilities.println( "Processing project " + project.getName() );
+		for (JDeveloperProject project : getProjectFiles(Cli.getInstance()
+				.getCommandLine().getArgs()[0])) {
+			Utilities.println("Processing project " + project.getName());
 			Utilities.indent();
 
-			if( project.hasComposite() )
-			{
+			if (project.hasComposite()) {
 				BPELComposite composite;
 				try {
-					composite = new BPELComposite( project.getCompositePath() );
+					composite = new BPELComposite(project.getCompositePath());
 					try {
-						for( BPELFile bpel : composite.getBPELFiles() ) {
-							processBpelFile( bpel );
+						for (BPELFile bpel : composite.getBPELFiles()) {
+							processBpelFile(bpel);
 						}
 					} catch (Exception e) {
-						logger.error( "Error calling processBpelFile()", e );
+						logger.error("Error calling processBpelFile()", e);
 					}
 				} catch (ParserConfigurationException | SAXException
 						| IOException e) {
-					logger.error( "Error constructing BPELComposite object", e );
+					logger.error("Error constructing BPELComposite object", e);
 				}
+			} else {
+				Utilities.println(project.getName()
+						+ " does not have a BPEL composite.");
 			}
-			else
-			{
-				Utilities.println( project.getName() + " does not have a BPEL composite." );
-			}
-			
+
 			Utilities.outdent();
 		}
 		logger.trace("Ending application");
 	}
 
-	private static ArrayList<JDeveloperProject> getProjectFiles(String[] args) {
+	private static ArrayList<JDeveloperProject> getProjectFiles(String basePath) {
 		final ArrayList<JDeveloperProject> projectFiles = new ArrayList<JDeveloperProject>();
-		CommandLine cli = new Cli(args).parse();
+		CommandLine cli = Cli.getInstance().getCommandLine();
 		if (cli.hasOption("r")) {
 			try {
 				Files.walkFileTree(Paths.get(cli.getArgs()[0]),
@@ -80,10 +81,13 @@ public class Analyzer {
 									java.nio.file.attribute.BasicFileAttributes attrs) {
 								if (file.toString().endsWith(".jpr")) {
 									try {
-										projectFiles.add( new JDeveloperProject( file ) );
+										projectFiles.add(new JDeveloperProject(
+												file));
 									} catch (ParserConfigurationException
 											| SAXException | IOException e) {
-										logger.error("Error creating JDeveloperProject object", e);
+										logger.error(
+												"Error creating JDeveloperProject object",
+												e);
 									}
 								}
 								return FileVisitResult.CONTINUE;
@@ -99,10 +103,10 @@ public class Analyzer {
 				logger.error("Error recursing through target directory.", e);
 			}
 		} else {
-			for (String jprPath : new java.io.File(args[0])
+			for (String jprPath : new java.io.File(basePath)
 					.list(new OnlyJPRFilter())) {
 				try {
-					projectFiles.add( new JDeveloperProject( Paths.get( jprPath ) ) );
+					projectFiles.add(new JDeveloperProject(Paths.get(jprPath)));
 				} catch (ParserConfigurationException | SAXException
 						| IOException e) {
 					logger.error("Error creating JDeveloperProject object", e);
@@ -113,22 +117,21 @@ public class Analyzer {
 		return projectFiles;
 	}
 
-	private static void processBpelFile( BPELFile bpel )
-			throws Exception {
+	private static void processBpelFile(BPELFile bpel) throws Exception {
 		Path bpelPath = bpel.getPath();
-		Utilities.println( "BPEL: " + bpelPath.getFileName() );
+		Utilities.println("BPEL: " + bpelPath.getFileName());
 		Utilities.indent();
 
-		File f = new File( bpelPath.toString() );
+		File f = new File(bpelPath.toString());
 		if (!f.exists() || f.isDirectory()) {
 			AppException e = new AppException(bpelPath
 					+ " (The system cannot find the file specified)");
-			Utilities.println( Utilities.StringifyAppException(e));
+			Utilities.println(Utilities.StringifyAppException(e));
 			Utilities.outdent();
 			return;
 		}
 
-		logger.info("Processing BPEL file {}", bpelPath.getFileName() );
+		logger.info("Processing BPEL file {}", bpelPath.getFileName());
 		List<HierarchicalConfiguration> rules = Settings.getInstance()
 				.configurationsAt("rules.rule");
 		for (HierarchicalConfiguration rule : rules) {
@@ -137,8 +140,8 @@ public class Analyzer {
 				String description = rule.getString("description");
 				if (evaluator != null) {
 					// invoke the evaluation
-					evaluator.evaluate( bpel );
-					evaluator.printOutput( description );
+					evaluator.evaluate(bpel);
+					evaluator.printOutput(description);
 				} else {
 					throw new ClassNotFoundException(
 							"Class '"
@@ -169,9 +172,10 @@ public class Analyzer {
 									+ theJarFile.toString());
 				}
 				URL theJarUrl = theJarFile.toURI().toURL();
-				URLClassLoader cl = URLClassLoader
-						.newInstance(new URL[] { theJarUrl });
-				clazz = cl.loadClass(analyzer);
+				try (URLClassLoader cl = URLClassLoader
+						.newInstance(new URL[] { theJarUrl })) {
+					clazz = cl.loadClass(analyzer);
+				}
 			} else {
 				clazz = Class.forName(analyzer);
 			}

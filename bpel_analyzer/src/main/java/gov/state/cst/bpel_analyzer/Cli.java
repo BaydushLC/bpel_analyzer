@@ -11,26 +11,42 @@ import org.slf4j.LoggerFactory;
 
 public class Cli {
     private static final Logger logger = LoggerFactory.getLogger( Cli.class );
-    private String[] args = null;
-    private Options options = new Options();
+    private static Cli instance;
+    private Options options = null;
     private CommandLine cmd = null;
     
-    @SuppressWarnings("unused")
-	private Cli()
+    /**
+     * Exists to prevent instantiation of singleton object
+     */
+    private Cli()
     {
     }
     
-    public Cli( String[] args )
+	/**
+	 * Gets the single instance of Cli.
+	 *
+	 * @return single instance of Cli
+	 */
+	public synchronized static Cli getInstance() {
+		if (instance == null) {
+			instance = new Cli();
+			logger.info("created singleton: {}", instance);
+		}
+		return instance;
+	}
+    
+    /**
+     * Initialize.
+     *
+     * @param args the args
+     * @return true, if successful
+     */
+    public boolean initialize( String[] args )
     {
-    	this.args = args;
-    	
+    	options = new Options();
     	options.addOption( "h", "help", false, "show help." );
     	options.addOption( "r", "recurse", false, "recurse into sub-directories for jDeveloper project files." );
     	
-    }
-    
-    public CommandLine parse()
-    {
     	CommandLineParser parser = new DefaultParser();
     	
     	cmd = null;
@@ -41,24 +57,28 @@ public class Cli {
     		if( cmd.hasOption( "h" ) )
     		{
     			help();
+    			return false;
     		}
     		
     		if( cmd.getArgs().length != 1 ) {
-    			System.err.println( "Required path argument missing!" );
+    			logger.error("Required path argument missing!");
     			help();
+    			return false;
     		}
-    		
-    		return cmd;
     	}
     	catch( ParseException e )
     	{
     		logger.error( "Failed to parse command line properties.", e );
+    		return false;
     	}
-    	return null;
+    	return true;
     }
     
     public CommandLine getCommandLine()
     {
+    	if( cmd == null) {
+    		logger.error( "Attempt to retrieve CommandLine object before intialization.");
+    	}
     	return cmd;
     }
     
@@ -70,6 +90,5 @@ public class Cli {
     			"Scan directories for jpr files and analyze BPELs referenced therein." + System.lineSeparator() + System.lineSeparator(),
     			options,
     			"{DIRECTORY}     Directory path to look for jDeveloper projects in." );
-    	System.exit( 0 );
     }
 }

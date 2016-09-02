@@ -14,7 +14,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class MaxJavaSnippetLength extends RuleViolations {
-    private BPELFile bpelFile;
     private int max_code_lines;
     private int countOfSnippets;
 
@@ -38,7 +37,6 @@ public class MaxJavaSnippetLength extends RuleViolations {
 
 	@Override
 	public boolean evaluate( BPELFile bpelFile ) {
-		this.bpelFile = bpelFile;
 		this.clear();
 
 		try {
